@@ -12,6 +12,7 @@ extern "C" {
 #include "simplehttp.h"
 
 void postWeather(char* temperature, char* humidity, char* uuid);
+void saveMeasurement(float temperature, float humidity, char* uuid);
 
 #ifdef __cplusplus
 }

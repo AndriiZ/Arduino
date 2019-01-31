@@ -21,10 +21,29 @@ int compile_regex (regex_t * r, const char * regex_text);
 int match_regex (regex_t * r, const char * to_match, char* results[]);
 
 
-int main()
+int main(int argc, char **argv)
 {
+  int cport_nr=16;/* /dev/ttyUSB0 (COM1 on windows) */
+
+
+  if (argc > 1)
+  {
+    char* comport = argv[1];
+    //printf("%s\n", argv[1]);
+
+    int idx;
+    for (idx=1;idx<38;idx++)
+    {
+      printf("%s\n", comports[idx]);
+      if(!strcmp(comports[idx], comport))
+      {
+        //printf("%s %d\n", comports[idx], idx);
+        cport_nr = idx;
+      }
+    }
+  }
+
   int i, n,
-      cport_nr=16,        /* /dev/ttyUSB0 (COM1 on windows) */
       bdrate=9600;       /* 9600 baud */
 
   unsigned char buf[ARDUINOBUFFER];
@@ -33,7 +52,9 @@ int main()
 
   if(RS232_OpenComport(cport_nr, bdrate, mode))
   {
-    putError("Can not open serial port");
+     char error[80];
+     sprintf(error, "Can not open serial port %s", comports[cport_nr]);
+    putError(error);
     return(0);
   }
 
@@ -73,7 +94,7 @@ int main()
         }
       }
 
-      //printf("received %i bytes: %s\n", n, (char *)buf);
+     // printf("received %i bytes: %s\n", n, (char *)buf);
       int success =  match_regex(& r, (char*)buf, result);
     if (success == 0)
     {
@@ -86,6 +107,9 @@ int main()
        int idx = attempts %  COUNTPERMINUTE;
 	humidities[idx] = atof(result[1]);
 	temperatures[idx] = atof(result[0]);
+
+	saveMeasurement( temperatures[idx], humidities[idx], "AF993B68-0EF7-4842-8A36-8FD03A695456");
+
 	if (idx == 0 && attempts>=COUNTPERMINUTE)
 	{
 	   float sumTemp, sumHum;
@@ -97,8 +121,8 @@ int main()
 	   }
            sprintf(t, "%.2lf",sumTemp/COUNTPERMINUTE);
 	   sprintf(h, "%.2lf",sumHum/COUNTPERMINUTE);
-	   // printf("Avg Temperature %s Humidity %s\r\n", t, h);
-	   postWeather(t,h,"AF993B68-0EF7-4842-8A36-8FD03A695456");
+	    printf("Avg Temperature %s Humidity %s\r\n", t, h);
+	   //saveWeather(t,h,"AF993B68-0EF7-4842-8A36-8FD03A695456");
 	   sumTemp = 0;
 	   sumHum = 0;
 	}
